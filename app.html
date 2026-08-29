@@ -44,99 +44,200 @@
         <!-- ---- New Job Tab ---- -->
         <div id="panelNewJob">
 
-          <!-- Upload -->
-          <div class="mb-24">
-            <div class="section-title">File</div>
-            <div class="upload-zone" id="uploadZone">
-              <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" onchange="onFileSelect(this)" />
-              <span class="upload-icon">↑</span>
-              <div class="upload-label">Drop file here or <span style="text-decoration:underline;">browse</span></div>
-              <div class="upload-hint">PDF, Word, JPG, PNG — max 20 MB</div>
+          <!-- Step Progress Bar -->
+          <div class="step-bar">
+            <div class="step-item active" id="step1Indicator">
+              <span class="step-num">1</span> Upload & Confirm File
             </div>
-            <div id="filePill" class="hidden"></div>
+            <div class="step-line"></div>
+            <div class="step-item" id="step2Indicator">
+              <span class="step-num">2</span> Details & Checkout
+            </div>
           </div>
 
-          <!-- Print Options -->
-          <div class="mb-24">
-            <div class="section-title">Print Mode</div>
-            <div class="radio-group">
-              <label class="radio-option selected" id="optMono" for="rdMono">
-                <input type="radio" name="colorMode" id="rdMono" value="monochrome" checked onchange="onOptionChange()" />
-                <span class="radio-option-icon">◾</span>
-                <div>
-                  <div class="radio-option-text">Monochrome</div>
-                  <div class="radio-option-sub">RM 0.10 / page</div>
+          <!-- ========================
+               STEP 1: UPLOAD & CONFIRM FILE
+               ======================== -->
+          <div id="step1View">
+            <div class="mb-24">
+              <div class="section-title">Select Document</div>
+              <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" onchange="onFileSelect(this)" />
+                <span class="upload-icon">↑</span>
+                <div class="upload-label">Drop file here or <span style="text-decoration:underline;">browse</span></div>
+                <div class="upload-hint">PDF, Word, JPG, PNG — max 20 MB</div>
+              </div>
+              <div id="filePill" class="hidden"></div>
+            </div>
+
+            <!-- Confirmation Card -->
+            <div id="fileConfirmCard" class="card mb-24 hidden" style="background:#F9FAFB;">
+              <div class="card-body">
+                <h3 style="margin-bottom:8px;">Ready to configure print options?</h3>
+                <p style="font-size:13px;margin-bottom:12px;">Your document is loaded. Click Next to specify copies, color settings, contact info, and payment method.</p>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-full btn-lg" id="nextToStep2Btn" onclick="goToStep2()" disabled>
+              Next: Order Details & Payment →
+            </button>
+            <p class="text-xs text-muted text-right mt-8">Supported: PDF, Word, JPG, PNG</p>
+          </div>
+
+          <!-- ========================
+               STEP 2: ORDER DETAILS, SPECS & PAYMENT
+               ======================== -->
+          <div id="step2View" class="hidden">
+
+            <!-- Selected File Summary -->
+            <div class="card mb-20" style="background:#F8FAFC;border-color:#E2E8F0;">
+              <div class="card-body" style="padding:16px;">
+                <div class="flex-between">
+                  <div>
+                    <div style="font-size:11px;color:var(--text-4);text-transform:uppercase;font-weight:600;">Selected File</div>
+                    <div id="step2FileName" style="font-size:14px;font-weight:600;color:var(--text);margin-top:2px;">document.pdf</div>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" onclick="goToStep1()">Change File</button>
                 </div>
-                <span class="radio-check"></span>
-              </label>
-              <label class="radio-option" id="optColor" for="rdColor">
-                <input type="radio" name="colorMode" id="rdColor" value="color" onchange="onOptionChange()" />
-                <span class="radio-option-icon">🟦</span>
-                <div>
-                  <div class="radio-option-text">Full Color</div>
-                  <div class="radio-option-sub">RM 0.50 / page</div>
+              </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="card mb-20">
+              <div class="card-body">
+                <div class="section-title">Customer Information</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="label" for="custName">Full Name</label>
+                    <input type="text" id="custName" class="input" placeholder="Your name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="label" for="custPhone">Phone Number</label>
+                    <input type="tel" id="custPhone" class="input" placeholder="01x-xxxxxxx" />
+                  </div>
                 </div>
-                <span class="radio-check"></span>
-              </label>
+              </div>
             </div>
-          </div>
 
-          <div class="form-row mb-24">
-            <div class="form-group">
-              <label class="label" for="paperSize">Paper Size</label>
-              <select class="select" id="paperSize" onchange="onOptionChange()">
-                <option value="A4">A4 (210 × 297 mm)</option>
-                <option value="Letter">Letter (8.5 × 11 in)</option>
-                <option value="A3">A3 (297 × 420 mm)</option>
-              </select>
+            <!-- Print Specifications -->
+            <div class="card mb-20">
+              <div class="card-body">
+                <div class="section-title">Print Specifications</div>
+
+                <!-- Print Mode -->
+                <div class="mb-20">
+                  <label class="label">Color Mode</label>
+                  <div class="radio-group">
+                    <label class="radio-option selected" id="optMono" for="rdMono">
+                      <input type="radio" name="colorMode" id="rdMono" value="monochrome" checked onchange="onOptionChange()" />
+                      <span class="radio-option-icon">◾</span>
+                      <div>
+                        <div class="radio-option-text">Monochrome</div>
+                        <div class="radio-option-sub">RM 0.10 / page</div>
+                      </div>
+                      <span class="radio-check"></span>
+                    </label>
+                    <label class="radio-option" id="optColor" for="rdColor">
+                      <input type="radio" name="colorMode" id="rdColor" value="color" onchange="onOptionChange()" />
+                      <span class="radio-option-icon">🟦</span>
+                      <div>
+                        <div class="radio-option-text">Full Color</div>
+                        <div class="radio-option-sub">RM 0.50 / page</div>
+                      </div>
+                      <span class="radio-check"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-row mb-20">
+                  <div class="form-group">
+                    <label class="label" for="paperSize">Paper Size</label>
+                    <select class="select" id="paperSize" onchange="onOptionChange()">
+                      <option value="A4">A4 (210 × 297 mm)</option>
+                      <option value="Letter">Letter (8.5 × 11 in)</option>
+                      <option value="A3">A3 (297 × 420 mm)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="label" for="sides">Sides</label>
+                    <select class="select" id="sides" onchange="onOptionChange()">
+                      <option value="single">Single-sided</option>
+                      <option value="double">Double-sided</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-20">
+                  <label class="label">Copies</label>
+                  <div class="counter">
+                    <button class="counter-btn" onclick="changeCopies(-1)">−</button>
+                    <div class="counter-num" id="copiesNum">1</div>
+                    <button class="counter-btn" onclick="changeCopies(1)">+</button>
+                  </div>
+                </div>
+
+                <div class="form-group mb-20">
+                  <label class="label" for="instructions">Special Instructions <span style="font-weight:400;color:var(--text-4);">(optional)</span></label>
+                  <textarea class="textarea" id="instructions" placeholder="e.g. Print pages 1–5, staple, landscape..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="label" for="pickupTime">Preferred Pickup</label>
+                  <select class="select" id="pickupTime">
+                    <option>As soon as ready</option>
+                    <option>Morning (8am – 12pm)</option>
+                    <option>Afternoon (12pm – 4pm)</option>
+                    <option>Evening (4pm – 6pm)</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="label" for="sides">Sides</label>
-              <select class="select" id="sides" onchange="onOptionChange()">
-                <option value="single">Single-sided</option>
-                <option value="double">Double-sided</option>
-              </select>
+
+            <!-- Payment Method -->
+            <div class="card mb-20">
+              <div class="card-body">
+                <div class="section-title">Payment Method</div>
+                <div class="radio-group">
+                  <label class="radio-option selected" id="optPayCash" for="payCash">
+                    <input type="radio" name="paymentMethod" id="payCash" value="cash" checked onchange="onPaymentChange()" />
+                    <span class="radio-option-icon">💵</span>
+                    <div>
+                      <div class="radio-option-text">Cash on Pickup</div>
+                      <div class="radio-option-sub">Pay at counter upon collection</div>
+                    </div>
+                    <span class="radio-check"></span>
+                  </label>
+                  <label class="radio-option" id="optPayToyyib" for="payToyyib">
+                    <input type="radio" name="paymentMethod" id="payToyyib" value="toyyibpay" onchange="onPaymentChange()" />
+                    <span class="radio-option-icon">💳</span>
+                    <div>
+                      <div class="radio-option-text">ToyyibPay / FPX</div>
+                      <div class="radio-option-sub">Online Banking / ToyyibPay Gateway</div>
+                    </div>
+                    <span class="radio-check"></span>
+                  </label>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="mb-24">
-            <label class="label">Copies</label>
-            <div class="counter">
-              <button class="counter-btn" onclick="changeCopies(-1)">−</button>
-              <div class="counter-num" id="copiesNum">1</div>
-              <button class="counter-btn" onclick="changeCopies(1)">+</button>
+            <!-- Price & Submit -->
+            <div class="price-row">
+              <div>
+                <div class="price-label">Estimated Total</div>
+                <div class="price-note" id="payNote">Pay at counter · Final total by page count</div>
+              </div>
+              <div class="price-value" id="priceEst">RM 0.10+</div>
             </div>
-          </div>
 
-          <div class="form-group mb-24">
-            <label class="label" for="instructions">Special Instructions <span style="font-weight:400;color:var(--text-4);">(optional)</span></label>
-            <textarea class="textarea" id="instructions" placeholder="e.g. Print pages 1–5, staple, landscape..."></textarea>
-          </div>
-
-          <div class="form-group mb-24">
-            <label class="label" for="pickupTime">Preferred Pickup</label>
-            <select class="select" id="pickupTime">
-              <option>As soon as ready</option>
-              <option>Morning (8am – 12pm)</option>
-              <option>Afternoon (12pm – 4pm)</option>
-              <option>Evening (4pm – 6pm)</option>
-            </select>
-          </div>
-
-          <!-- Price estimate -->
-          <div class="price-row">
-            <div>
-              <div class="price-label">Estimated Total</div>
-              <div class="price-note">Pay on collection · Final price by page count</div>
+            <div style="display:flex;gap:12px;">
+              <button class="btn btn-secondary btn-lg" style="flex:0 0 120px;" onclick="goToStep1()">← Back</button>
+              <button class="btn btn-primary btn-full btn-lg" id="submitBtn" onclick="submitJob()">
+                Confirm & Place Order 🖨️
+              </button>
             </div>
-            <div class="price-value" id="priceEst">RM 0.10+</div>
+
           </div>
 
-          <button class="btn btn-primary btn-full btn-lg" id="submitBtn" onclick="submitJob()">
-            Submit Print Job
-          </button>
-
-          <p class="text-xs text-muted text-right mt-8">Supported: PDF, Word, JPG, PNG</p>
         </div>
 
         <!-- ---- My Orders Tab ---- -->

@@ -184,6 +184,37 @@ function showTab(tab) {
 /* ============================
    CUSTOMER — FILE UPLOAD
    ============================ */
+/* ============================
+   CUSTOMER — FILE & CHECKOUT STEP FLOW
+   ============================ */
+function goToStep1() {
+  $('step1View').classList.remove('hidden');
+  $('step2View').classList.add('hidden');
+  $('step1Indicator').classList.add('active');
+  $('step2Indicator').classList.remove('active');
+}
+
+function goToStep2() {
+  if (!selectedFile) {
+    showToast('Please select a file to print first.', 'error');
+    return;
+  }
+  $('step1View').classList.add('hidden');
+  $('step2View').classList.remove('hidden');
+  $('step1Indicator').classList.remove('active');
+  $('step2Indicator').classList.add('active');
+
+  $('step2FileName').textContent = selectedFile.name;
+
+  if (currentProfile) {
+    if (!$('custName').value)  $('custName').value  = currentProfile.name || '';
+    if (!$('custPhone').value) $('custPhone').value = currentProfile.phone || '';
+  }
+
+  onOptionChange();
+  onPaymentChange();
+}
+
 function onFileSelect(input) {
   const file = input.files[0];
   if (!file) return;
@@ -201,6 +232,9 @@ function onFileSelect(input) {
       <span class="file-pill-size">${formatSize(file.size)}</span>
       <button class="file-pill-remove" onclick="clearFile()">×</button>
     </div>`;
+
+  if ($('fileConfirmCard')) $('fileConfirmCard').classList.remove('hidden');
+  if ($('nextToStep2Btn'))  $('nextToStep2Btn').disabled = false;
   onOptionChange();
 }
 
@@ -209,25 +243,29 @@ function clearFile() {
   $('fileInput').value = '';
   $('filePill').classList.add('hidden');
   $('filePill').innerHTML = '';
+  if ($('fileConfirmCard')) $('fileConfirmCard').classList.add('hidden');
+  if ($('nextToStep2Btn'))  $('nextToStep2Btn').disabled = true;
 }
 
 // Drag & drop
 const zone = $('uploadZone');
-zone.addEventListener('dragover',  (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
-zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
-zone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  zone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (!file) return;
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  $('fileInput').files = dt.files;
-  onFileSelect($('fileInput'));
-});
+if (zone) {
+  zone.addEventListener('dragover',  (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    $('fileInput').files = dt.files;
+    onFileSelect($('fileInput'));
+  });
+}
 
 /* ============================
-   CUSTOMER — OPTIONS
+   CUSTOMER — OPTIONS & PAYMENT
    ============================ */
 function changeCopies(delta) {
   copies = Math.max(1, Math.min(99, copies + delta));
@@ -243,7 +281,14 @@ function onOptionChange() {
   $('priceEst').textContent = `RM ${(rate * copies).toFixed(2)}+`;
 }
 
-document.querySelectorAll('.radio-option').forEach(el => el.addEventListener('click', onOptionChange));
+function onPaymentChange() {
+  const isCash = $('payCash').checked;
+  $('optPayCash').classList.toggle('selected', isCash);
+  $('optPayToyyib').classList.toggle('selected', !isCash);
+  $('payNote').textContent = isCash
+    ? 'Pay at counter · Final total by page count'
+    : 'ToyyibPay Gateway · FPX Online Banking';
+}
 
 /* ============================
    CUSTOMER — SUBMIT JOB
@@ -251,10 +296,15 @@ document.querySelectorAll('.radio-option').forEach(el => el.addEventListener('cl
 async function submitJob() {
   if (!selectedFile) {
     showToast('Please upload a file first.', 'error');
+    goToStep1();
     return;
   }
 
-  setLoading('submitBtn', true, 'Submit Print Job');
+  const custName  = $('custName')?.value.trim() || currentProfile.name;
+  const custPhone = $('custPhone')?.value.trim() || currentProfile.phone;
+  const isToyyib  = $('payToyyib')?.checked;
+
+  setLoading('submitBtn', true, 'Confirm & Place Order 🖨️');
 
   try {
     // 1. Upload file to Supabase Storage
@@ -271,7 +321,7 @@ async function submitJob() {
     // 2. Insert job record
     const { data: job, error: insertErr } = await sb.from('jobs').insert({
       customer_id:         currentUser.id,
-      customer_name:       currentProfile.name,
+      customer_name:       custName,
       customer_student_id: currentProfile.student_id,
       file_name:           selectedFile.name,
       file_path:           filePath,
@@ -287,16 +337,29 @@ async function submitJob() {
 
     if (insertErr) throw new Error('Failed to save job: ' + insertErr.message);
 
-    setLoading('submitBtn', false, 'Submit Print Job');
+    setLoading('submitBtn', false, 'Confirm & Place Order 🖨️');
 
-    // Show success
-    $('successId').textContent = 'Job ID: ' + job.id.slice(0, 8).toUpperCase();
+    if (isToyyib) {
+      showToast('Order saved! Directing to ToyyibPay portal...', 'info');
+    }
+
+    // Show success modal
+    $('successId').textContent = 'Job ID: #' + job.id.slice(0, 8).toUpperCase() + (isToyyib ? ' · ToyyibPay Selected' : ' · Cash on Pickup');
     $('successOverlay').classList.remove('hidden');
 
   } catch (err) {
-    setLoading('submitBtn', false, 'Submit Print Job');
+    setLoading('submitBtn', false, 'Confirm & Place Order 🖨️');
     showToast(err.message, 'error');
   }
+}
+
+function closeSuccess() {
+  $('successOverlay').classList.add('hidden');
+  clearFile();
+  $('instructions').value = '';
+  copies = 1;
+  $('copiesNum').textContent = '1';
+  goToStep1();
 }
 
 function closeSuccess() {
