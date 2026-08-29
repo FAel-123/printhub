@@ -5,188 +5,510 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PrintHub — Sign In</title>
   <meta name="description" content="PrintHub college print service. Sign in to submit your print job." />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #fff;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- Color Panel (Left) ---- */
+    .panel-left {
+      flex: 0 0 52%;
+      background: #4F46E5;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.4) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(79,70,229,0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(139,92,246,0.3) 0%, transparent 50%);
+      padding: 60px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle grid pattern */
+    .panel-left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .panel-brand {
+      position: relative;
+      z-index: 1;
+    }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 60px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .brand-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .panel-headline {
+      position: relative;
+      z-index: 1;
+    }
+    .panel-headline h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .panel-headline p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.65;
+      max-width: 380px;
+    }
+
+    .panel-features {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .feature-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .feature-dot {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .feature-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      font-weight: 400;
+    }
+
+    /* ---- Form Panel (Right) ---- */
+    .panel-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: #fff;
+      position: relative;
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .form-heading {
+      margin-bottom: 28px;
+    }
+    .form-heading h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+    .form-heading p {
+      font-size: 14px;
+      color: #6B7280;
+    }
+
+    /* Form fields */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #111827;
+      background: #fff;
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .field input::placeholder { color: #9CA3AF; }
+    .field input:focus {
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .err-msg {
+      font-size: 12px;
+      color: #DC2626;
+      margin-top: 5px;
+      display: none;
+    }
+    .err-msg.show { display: block; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      height: 44px;
+      background: #4F46E5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 150ms ease, transform 100ms ease;
+      margin-top: 24px;
+      letter-spacing: 0.1px;
+    }
+    .btn-submit:hover { background: #4338CA; }
+    .btn-submit:active { transform: scale(0.99); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 22px 0;
+      font-size: 12px;
+      color: #9CA3AF;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: #F3F4F6;
+    }
+
+    /* Toggle link */
+    .toggle-link {
+      text-align: center;
+      font-size: 13px;
+      color: #6B7280;
+      margin-top: 20px;
+    }
+    .toggle-link button {
+      background: none;
+      border: none;
+      color: #4F46E5;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .toggle-link button:hover { color: #3730A3; text-decoration: underline; }
+
+    /* Toast */
+    .toast-wrap {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      z-index: 999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      background: #111827;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: tst-in 0.2s ease;
+      max-width: 300px;
+    }
+    .toast.err { background: #DC2626; }
+    .toast.ok  { background: #16A34A; }
+    @keyframes tst-in  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes tst-out { from { opacity:1; } to { opacity:0; } }
+
+    /* Loading full screen */
+    .full-loader {
+      position: fixed; inset: 0;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    .full-loader .spinner { border-color: rgba(79,70,229,0.2); border-top-color: #4F46E5; width: 22px; height: 22px; }
+
+    /* Responsive */
+    @media (max-width: 840px) {
+      .panel-left { display: none; }
+      .panel-right { padding: 40px 24px; }
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Auth Page -->
-  <div class="auth-page" id="authPage">
-    <div class="auth-header">
-      <div class="auth-brand">PrintHub</div>
-      <div class="auth-tagline">College Print Service</div>
-    </div>
+  <!-- Full-screen loader -->
+  <div class="full-loader" id="loader">
+    <div class="spinner"></div>
+  </div>
 
-    <div class="auth-card">
-      <!-- Sign In Form -->
-      <div id="signInView">
-        <h2 style="margin-bottom:20px;">Sign in</h2>
-        <div class="form-group">
-          <label class="label" for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" class="input" placeholder="your@email.com" autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label class="label" for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" class="input" placeholder="••••••••" autocomplete="current-password" />
-          <div class="error-msg hidden" id="loginError"></div>
-        </div>
-        <button class="btn btn-primary btn-full btn-lg mt-20" id="signInBtn" onclick="handleSignIn()">
-          Sign in
-        </button>
+  <!-- Left colour panel -->
+  <div class="panel-left" id="panelLeft">
+    <div class="panel-brand">
+      <div class="brand-mark">
+        <div class="brand-icon">🖨</div>
+        <span class="brand-name">PrintHub</span>
       </div>
-
-      <!-- Register Form -->
-      <div id="registerView" class="hidden">
-        <h2 style="margin-bottom:20px;">Create account</h2>
-        <div class="form-group">
-          <label class="label" for="regName">Full Name</label>
-          <input type="text" id="regName" class="input" placeholder="Ahmad Razif" autocomplete="name" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="label" for="regStudentId">Student ID</label>
-            <input type="text" id="regStudentId" class="input" placeholder="2024-12345" />
-          </div>
-          <div class="form-group">
-            <label class="label" for="regPhone">Phone</label>
-            <input type="tel" id="regPhone" class="input" placeholder="01x-xxxxxxx" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="label" for="regEmail">Email</label>
-          <input type="email" id="regEmail" class="input" placeholder="your@email.com" autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label class="label" for="regPassword">Password</label>
-          <input type="password" id="regPassword" class="input" placeholder="min. 6 characters" autocomplete="new-password" />
-          <div class="error-msg hidden" id="registerError"></div>
-        </div>
-        <button class="btn btn-primary btn-full btn-lg mt-20" id="registerBtn" onclick="handleRegister()">
-          Create account
-        </button>
+      <div class="panel-headline">
+        <h1>The smarter<br>way to print.</h1>
+        <p>Upload your file, set your options, and collect — without the back-and-forth messages.</p>
       </div>
     </div>
 
-    <!-- Toggle Sign In / Register -->
-    <div class="auth-footer" id="toggleSignIn">
-      Don't have an account? <button onclick="showRegister()">Register</button>
-    </div>
-    <div class="auth-footer hidden" id="toggleRegister">
-      Already have an account? <button onclick="showSignIn()">Sign in</button>
+    <div class="panel-features">
+      <div class="feature-row">
+        <div class="feature-dot">📤</div>
+        <span class="feature-text">Upload any file — PDF, Word, or image</span>
+      </div>
+      <div class="feature-row">
+        <div class="feature-dot">🎨</div>
+        <span class="feature-text">Choose colour or monochrome, any paper size</span>
+      </div>
+      <div class="feature-row">
+        <div class="feature-dot">📋</div>
+        <span class="feature-text">Track your job status in real time</span>
+      </div>
+      <div class="feature-row">
+        <div class="feature-dot">⚡</div>
+        <span class="feature-text">One-click print straight to the inkjet</span>
+      </div>
     </div>
   </div>
 
-  <!-- Loading screen (while checking session) -->
-  <div id="loadingScreen" class="flex-center" style="min-height:100vh;display:none;">
-    <div class="spinner spinner-dark"></div>
+  <!-- Right form panel -->
+  <div class="panel-right">
+    <div class="form-box">
+
+      <!-- Sign In -->
+      <div id="viewSignIn">
+        <div class="form-heading">
+          <h2>Welcome back</h2>
+          <p>Sign in to your PrintHub account</p>
+        </div>
+
+        <div class="field">
+          <label for="siEmail">Email address</label>
+          <input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="siPass">Password</label>
+          <input type="password" id="siPass" placeholder="••••••••" autocomplete="current-password" />
+          <div class="err-msg" id="siErr"></div>
+        </div>
+
+        <button class="btn-submit" id="siBtn" onclick="handleSignIn()">Sign in</button>
+
+        <div class="divider">or</div>
+
+        <div class="toggle-link">
+          Don't have an account? <button onclick="switchView('register')">Create one</button>
+        </div>
+      </div>
+
+      <!-- Register -->
+      <div id="viewRegister" style="display:none;">
+        <div class="form-heading">
+          <h2>Create account</h2>
+          <p>Join PrintHub — it only takes a moment</p>
+        </div>
+
+        <div class="field">
+          <label for="rgName">Full Name</label>
+          <input type="text" id="rgName" placeholder="Ahmad Razif" autocomplete="name" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="rgSid">Student ID</label>
+            <input type="text" id="rgSid" placeholder="2024-12345" />
+          </div>
+          <div class="field">
+            <label for="rgPhone">Phone</label>
+            <input type="tel" id="rgPhone" placeholder="01x-xxxxxxx" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="rgEmail">Email address</label>
+          <input type="email" id="rgEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="rgPass">Password</label>
+          <input type="password" id="rgPass" placeholder="Min. 6 characters" autocomplete="new-password" />
+          <div class="err-msg" id="rgErr"></div>
+        </div>
+
+        <button class="btn-submit" id="rgBtn" onclick="handleRegister()">Create account</button>
+
+        <div class="divider">or</div>
+
+        <div class="toggle-link">
+          Already have an account? <button onclick="switchView('signin')">Sign in</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer note -->
+    <div style="position:absolute;bottom:24px;font-size:11px;color:#D1D5DB;text-align:center;">
+      PrintHub · College Print Service
+    </div>
   </div>
 
-  <div class="toast-container" id="toastContainer"></div>
+  <!-- Toasts -->
+  <div class="toast-wrap" id="toastWrap"></div>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
     const { createClient } = supabase;
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function showToast(msg, type = 'info') {
-      const c = document.getElementById('toastContainer');
+    /* ---- Helpers ---- */
+    function toast(msg, type) {
+      const w = document.getElementById('toastWrap');
       const t = document.createElement('div');
-      t.className = `toast toast-${type}`;
+      t.className = 'toast' + (type === 'err' ? ' err' : type === 'ok' ? ' ok' : '');
       t.textContent = msg;
-      c.appendChild(t);
-      setTimeout(() => { t.style.animation = 'toast-out 0.2s ease forwards'; setTimeout(() => t.remove(), 200); }, 3500);
+      w.appendChild(t);
+      setTimeout(() => { t.style.animation = 'tst-out 0.2s ease forwards'; setTimeout(() => t.remove(), 200); }, 3500);
     }
 
-    function setLoading(btnId, loading, label) {
-      const btn = document.getElementById(btnId);
-      btn.disabled = loading;
-      btn.innerHTML = loading ? '<span class="spinner"></span>' : label;
+    function setBtn(id, loading, label) {
+      const b = document.getElementById(id);
+      b.disabled = loading;
+      b.innerHTML = loading ? '<div class="spinner"></div>' : label;
     }
 
-    function showRegister() {
-      document.getElementById('signInView').classList.add('hidden');
-      document.getElementById('registerView').classList.remove('hidden');
-      document.getElementById('toggleSignIn').classList.add('hidden');
-      document.getElementById('toggleRegister').classList.remove('hidden');
+    function showErr(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.toggle('show', !!msg);
     }
 
-    function showSignIn() {
-      document.getElementById('registerView').classList.add('hidden');
-      document.getElementById('signInView').classList.remove('hidden');
-      document.getElementById('toggleRegister').classList.add('hidden');
-      document.getElementById('toggleSignIn').classList.remove('hidden');
+    function switchView(view) {
+      document.getElementById('viewSignIn').style.display    = view === 'signin'   ? '' : 'none';
+      document.getElementById('viewRegister').style.display  = view === 'register' ? '' : 'none';
+      showErr('siErr', ''); showErr('rgErr', '');
     }
 
+    /* ---- Sign In ---- */
     async function handleSignIn() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const errEl = document.getElementById('loginError');
-      errEl.classList.add('hidden');
+      const email = document.getElementById('siEmail').value.trim();
+      const pass  = document.getElementById('siPass').value;
+      showErr('siErr', '');
+      if (!email || !pass) { toast('Please fill in all fields.', 'err'); return; }
 
-      if (!email || !password) { showToast('Please fill in all fields.', 'error'); return; }
-
-      setLoading('signInBtn', true, 'Sign in');
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      setLoading('signInBtn', false, 'Sign in');
+      setBtn('siBtn', true, 'Sign in');
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      setBtn('siBtn', false, 'Sign in');
 
       if (error) {
-        errEl.textContent = error.message === 'Invalid login credentials'
-          ? 'Incorrect email or password.'
-          : error.message;
-        errEl.classList.remove('hidden');
+        showErr('siErr', error.message.includes('Invalid') ? 'Incorrect email or password.' : error.message);
         return;
       }
       window.location.href = 'app.html';
     }
 
+    /* ---- Register ---- */
     async function handleRegister() {
-      const name      = document.getElementById('regName').value.trim();
-      const studentId = document.getElementById('regStudentId').value.trim();
-      const phone     = document.getElementById('regPhone').value.trim();
-      const email     = document.getElementById('regEmail').value.trim();
-      const password  = document.getElementById('regPassword').value;
-      const errEl     = document.getElementById('registerError');
-      errEl.classList.add('hidden');
+      const name  = document.getElementById('rgName').value.trim();
+      const sid   = document.getElementById('rgSid').value.trim();
+      const phone = document.getElementById('rgPhone').value.trim();
+      const email = document.getElementById('rgEmail').value.trim();
+      const pass  = document.getElementById('rgPass').value;
+      showErr('rgErr', '');
 
-      if (!name || !email || !password) { showToast('Please fill in all required fields.', 'error'); return; }
-      if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
+      if (!name || !email || !pass) { toast('Please fill in required fields.', 'err'); return; }
+      if (pass.length < 6) { showErr('rgErr', 'Password must be at least 6 characters.'); return; }
 
-      setLoading('registerBtn', true, 'Create account');
+      setBtn('rgBtn', true, 'Create account');
       const { error } = await sb.auth.signUp({
-        email,
-        password,
-        options: { data: { name, student_id: studentId, phone } }
+        email, password: pass,
+        options: { data: { name, student_id: sid, phone } }
       });
-      setLoading('registerBtn', false, 'Create account');
+      setBtn('rgBtn', false, 'Create account');
 
-      if (error) {
-        errEl.textContent = error.message;
-        errEl.classList.remove('hidden');
-        return;
-      }
-      showToast('Account created! Signing you in...', 'success');
-      setTimeout(() => window.location.href = 'app.html', 1000);
+      if (error) { showErr('rgErr', error.message); return; }
+      toast('Account created!', 'ok');
+      setTimeout(() => window.location.href = 'app.html', 800);
     }
 
-    // Enter key support
-    document.addEventListener('keydown', (e) => {
+    /* ---- Enter key support ---- */
+    document.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
-      if (!document.getElementById('signInView').classList.contains('hidden')) handleSignIn();
+      if (document.getElementById('viewSignIn').style.display !== 'none') handleSignIn();
       else handleRegister();
     });
 
-    // Check existing session on load
+    /* ---- Check session ---- */
     (async () => {
-      document.getElementById('loadingScreen').style.display = 'flex';
-      document.getElementById('authPage').style.display = 'none';
       const { data } = await sb.auth.getSession();
-      if (data.session) {
-        window.location.href = 'app.html';
-      } else {
-        document.getElementById('loadingScreen').style.display = 'none';
-        document.getElementById('authPage').style.display = 'flex';
-      }
+      if (data.session) { window.location.href = 'app.html'; return; }
+      document.getElementById('loader').style.display = 'none';
     })();
   </script>
 </body>
