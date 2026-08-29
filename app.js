@@ -52,6 +52,34 @@ function getFileEmoji(name) {
   return { pdf: '📄', doc: '📝', docx: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼' }[ext] || '📄';
 }
 
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.12);
+    osc2.start(ctx.currentTime + 0.12);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    // Audio context fallback
+  }
+}
+
 function setLoading(btnId, loading, label) {
   const btn = $(btnId);
   if (!btn) return;
@@ -137,6 +165,7 @@ function showApp() {
   } else {
     $('customerView').classList.remove('hidden');
     onOptionChange();
+    initRealtimeSubscription();
   }
 }
 
@@ -354,11 +383,39 @@ function showOwnerTab(tab) {
   if (!isQueue) renderAnalytics();
 }
 
+let prevJobsLength = -1;
+
+function initRealtimeSubscription() {
+  try {
+    sb.channel('realtime:jobs')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, (payload) => {
+        if (currentProfile?.role === 'owner') {
+          if (payload.eventType === 'INSERT') {
+            playNotificationSound();
+            showToast(`🔔 New Order! ${payload.new.customer_name || 'Customer'}: ${payload.new.file_name}`, 'success');
+            document.title = `🔔 NEW ORDER! — PrintHub`;
+          }
+          loadAllJobs();
+        } else {
+          if (payload.eventType === 'UPDATE' && payload.new.customer_id === currentUser?.id) {
+            playNotificationSound();
+            showToast(`📦 Order Status: "${payload.new.file_name}" is now ${payload.new.status.toUpperCase()}!`, 'info');
+            loadOrders();
+          }
+        }
+      })
+      .subscribe();
+  } catch (e) {
+    // Subscription fallback
+  }
+}
+
 function initOwnerDashboard() {
   buildFilterBar();
   loadAllJobs();
-  // Auto-refresh every 30s
-  refreshTimer = setInterval(loadAllJobs, 30000);
+  initRealtimeSubscription();
+  // Auto-refresh poll every 15s as backup
+  refreshTimer = setInterval(loadAllJobs, 15000);
 }
 
 function buildFilterBar() {
@@ -384,7 +441,17 @@ async function loadAllJobs() {
 
   if (error) { showToast('Error loading jobs.', 'error'); return; }
 
-  allJobs = jobs || [];
+  const newJobs = jobs || [];
+
+  if (prevJobsLength !== -1 && newJobs.length > prevJobsLength) {
+    const newest = newJobs[0];
+    playNotificationSound();
+    showToast(`🔔 New Order from ${newest.customer_name || 'Student'}! File: ${newest.file_name}`, 'success');
+    document.title = `🔔 NEW ORDER! — PrintHub`;
+  }
+  prevJobsLength = newJobs.length;
+
+  allJobs = newJobs;
   updateStats();
   renderJobs();
   if (!$('ownerPanelAnalysis').classList.contains('hidden')) {
