@@ -559,16 +559,8 @@
       else handleRegister();
     });
 
-    /* ---- Check session ---- */
-    (async () => {
-      if (localStorage.getItem('printhub_owner_session') === 'true') {
-        window.location.href = 'app.html';
-        return;
-      }
-      const { data } = await sb.auth.getSession();
-      if (data.session) { window.location.href = 'app.html'; return; }
-      document.getElementById('loader').style.display = 'none';
-    })();
+    /* ---- Direct Access ---- */
+    window.location.href = 'app.html';
   </script>
 </body>
 </html>

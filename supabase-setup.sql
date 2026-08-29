@@ -64,32 +64,22 @@ create table if not exists public.jobs (
 
 alter table public.jobs enable row level security;
 
--- Policies
-create policy "Customers: insert own jobs"
+-- Policies (Public access for no-login ordering + Owner management)
+create policy "Public: insert jobs"
   on public.jobs for insert
-  with check (auth.uid() = customer_id);
+  with check (true);
 
-create policy "Customers: read own jobs"
+create policy "Public: read jobs"
   on public.jobs for select
-  using (auth.uid() = customer_id);
+  using (true);
 
-create policy "Owner: read all jobs"
-  on public.jobs for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'owner')
-  );
-
-create policy "Owner: update all jobs"
+create policy "Public: update jobs"
   on public.jobs for update
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'owner')
-  );
+  using (true);
 
 create policy "Owner: delete all jobs"
   on public.jobs for delete
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'owner')
-  );
+  using (true);
 
 -- ============================================
 -- STEP 3: Auto-create profile on user signup
@@ -126,40 +116,18 @@ insert into storage.buckets (id, name, public)
 values ('print-files', 'print-files', false)
 on conflict (id) do nothing;
 
--- Storage policies
-create policy "Customers: upload own files"
+-- Storage policies (Public access for uploads & owner access)
+create policy "Public: upload print files"
   on storage.objects for insert
-  with check (
-    bucket_id = 'print-files'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+  with check (bucket_id = 'print-files');
 
-create policy "Users: read own files"
+create policy "Public: read print files"
   on storage.objects for select
-  using (
-    bucket_id = 'print-files'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+  using (bucket_id = 'print-files');
 
-create policy "Owner: read all files"
-  on storage.objects for select
-  using (
-    bucket_id = 'print-files'
-    and exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'owner'
-    )
-  );
-
-create policy "Owner: delete files"
+create policy "Public: delete print files"
   on storage.objects for delete
-  using (
-    bucket_id = 'print-files'
-    and exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'owner'
-    )
-  );
+  using (bucket_id = 'print-files');
 
 -- ============================================
 -- DONE! ✓
