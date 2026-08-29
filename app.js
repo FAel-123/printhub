@@ -345,6 +345,15 @@ const FILTERS = [
   { key: 'cancelled', label: 'Cancelled' },
 ];
 
+function showOwnerTab(tab) {
+  const isQueue = tab === 'queue';
+  $('ownerPanelQueue').classList.toggle('hidden', !isQueue);
+  $('ownerPanelAnalysis').classList.toggle('hidden', isQueue);
+  $('tabOwnerQueue').classList.toggle('active', isQueue);
+  $('tabOwnerAnalysis').classList.toggle('active', !isQueue);
+  if (!isQueue) renderAnalytics();
+}
+
 function initOwnerDashboard() {
   buildFilterBar();
   loadAllJobs();
@@ -378,6 +387,103 @@ async function loadAllJobs() {
   allJobs = jobs || [];
   updateStats();
   renderJobs();
+  if (!$('ownerPanelAnalysis').classList.contains('hidden')) {
+    renderAnalytics();
+  }
+}
+
+function renderAnalytics() {
+  const activeJobs = allJobs.filter(j => j.status !== 'cancelled');
+  const total = activeJobs.length || 1;
+
+  // 1. Revenue
+  const rev = activeJobs.reduce((sum, j) => {
+    const rate = j.color_mode === 'color' ? 0.50 : 0.10;
+    return sum + (rate * (j.copies || 1));
+  }, 0);
+  $('anEstRevenue').textContent = `RM ${rev.toFixed(2)}`;
+
+  // 2. Completed
+  const completedCount = allJobs.filter(j => j.status === 'completed').length;
+  $('anCompletedCount').textContent = completedCount;
+
+  // 3. Color Ratio
+  const colorCount = activeJobs.filter(j => j.color_mode === 'color').length;
+  const monoCount  = activeJobs.length - colorCount;
+  const colorPct   = Math.round((colorCount / total) * 100);
+  const monoPct    = 100 - colorPct;
+
+  $('anColorRatio').textContent = `${colorPct}%`;
+  $('anColorSub').textContent = `${monoPct}% Monochrome (${monoCount} jobs)`;
+
+  $('distColorPct').textContent = `${colorPct}% (${colorCount})`;
+  $('distColorBar').style.width = `${colorPct}%`;
+  $('distMonoPct').textContent = `${monoPct}% (${monoCount})`;
+  $('distMonoBar').style.width = `${monoPct}%`;
+
+  // 4. Avg Copies
+  const totalCopies = activeJobs.reduce((s, j) => s + (j.copies || 1), 0);
+  const avgCopies = (totalCopies / total).toFixed(1);
+  $('anAvgCopies').textContent = avgCopies;
+
+  // 5. Paper Sizes
+  const a4Count     = activeJobs.filter(j => j.paper_size === 'A4').length;
+  const letterCount = activeJobs.filter(j => j.paper_size === 'Letter').length;
+  const a3Count     = activeJobs.filter(j => j.paper_size === 'A3').length;
+
+  const a4Pct     = Math.round((a4Count / total) * 100);
+  const letterPct = Math.round((letterCount / total) * 100);
+  const a3Pct     = Math.round((a3Count / total) * 100);
+
+  $('distA4Pct').textContent = `${a4Pct}% (${a4Count})`;
+  $('distA4Bar').style.width = `${a4Pct}%`;
+  $('distLetterPct').textContent = `${letterPct}% (${letterCount})`;
+  $('distLetterBar').style.width = `${letterPct}%`;
+  $('distA3Pct').textContent = `${a3Pct}% (${a3Count})`;
+  $('distA3Bar').style.width = `${a3Pct}%`;
+
+  // 6. Pickup Slots
+  const readyCount = activeJobs.filter(j => (j.pickup_time || '').includes('ready')).length;
+  const mornCount  = activeJobs.filter(j => (j.pickup_time || '').includes('Morning')).length;
+  const aftCount   = activeJobs.filter(j => (j.pickup_time || '').includes('Afternoon')).length;
+  const eveCount   = activeJobs.filter(j => (j.pickup_time || '').includes('Evening')).length;
+
+  $('distReadyPct').textContent = `${Math.round((readyCount / total) * 100)}% (${readyCount})`;
+  $('distReadyBar').style.width = `${Math.round((readyCount / total) * 100)}%`;
+  $('distMornPct').textContent  = `${Math.round((mornCount / total) * 100)}% (${mornCount})`;
+  $('distMornBar').style.width  = `${Math.round((mornCount / total) * 100)}%`;
+  $('distAftPct').textContent   = `${Math.round((aftCount / total) * 100)}% (${aftCount})`;
+  $('distAftBar').style.width   = `${Math.round((aftCount / total) * 100)}%`;
+  $('distEvePct').textContent   = `${Math.round((eveCount / total) * 100)}% (${eveCount})`;
+  $('distEveBar').style.width   = `${Math.round((eveCount / total) * 100)}%`;
+
+  // 7. Active Customers
+  const customerMap = {};
+  allJobs.forEach(j => {
+    const name = j.customer_name || 'Anonymous';
+    if (!customerMap[name]) customerMap[name] = { count: 0, spend: 0 };
+    customerMap[name].count += 1;
+    const rate = j.color_mode === 'color' ? 0.50 : 0.10;
+    customerMap[name].spend += (rate * (j.copies || 1));
+  });
+
+  const topCust = Object.entries(customerMap)
+    .map(([name, d]) => ({ name, ...d }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  if (topCust.length === 0) {
+    $('topCustomersList').innerHTML = '<div class="text-muted text-xs">No active customer history yet.</div>';
+  } else {
+    $('topCustomersList').innerHTML = topCust.map(c => `
+      <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <span style="font-weight:600;color:var(--text);">${c.name}</span>
+          <span style="font-size:11px;color:var(--text-4);margin-left:6px;">${c.count} order${c.count > 1 ? 's' : ''}</span>
+        </div>
+        <span style="font-weight:600;color:var(--accent);">RM ${c.spend.toFixed(2)}</span>
+      </div>`).join('');
+  }
 }
 
 function updateStats() {

@@ -158,41 +158,147 @@
   <div id="ownerView" class="main hidden">
     <div class="container">
 
-      <!-- Stats -->
-      <div class="stats-row" id="statsRow"></div>
+      <!-- Owner Navigation Tabs -->
+      <div class="tabs">
+        <button class="tab active" id="tabOwnerQueue" onclick="showOwnerTab('queue')">📋 Job Queue</button>
+        <button class="tab" id="tabOwnerAnalysis" onclick="showOwnerTab('analysis')">📊 Analytics & Analysis</button>
+      </div>
 
-      <!-- Toolbar -->
-      <div class="flex-between mb-16" style="flex-wrap:wrap;gap:10px;">
-        <div class="filter-bar" id="filterBar"></div>
-        <div class="search-wrap">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Search customer, file…" oninput="renderJobs()" />
+      <!-- ========================
+           TAB 1: JOB QUEUE
+           ======================== -->
+      <div id="ownerPanelQueue">
+        <!-- Stats Row -->
+        <div class="stats-row" id="statsRow"></div>
+
+        <!-- Toolbar -->
+        <div class="flex-between mb-16" style="flex-wrap:wrap;gap:10px;">
+          <div class="filter-bar" id="filterBar"></div>
+          <div class="search-wrap">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search customer, file…" oninput="renderJobs()" />
+          </div>
+        </div>
+
+        <!-- Jobs Table -->
+        <div class="card" style="overflow:hidden;">
+          <table class="job-table" id="jobTable">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>File</th>
+                <th>Options</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobTableBody"></tbody>
+          </table>
+          <!-- Mobile job list -->
+          <div id="jobMobileList"></div>
+          <div id="emptyJobs" class="empty hidden">
+            <span class="empty-icon">📭</span>
+            <h3>No jobs found</h3>
+            <p>No print jobs in this category.</p>
+          </div>
         </div>
       </div>
 
-      <!-- Jobs Table -->
-      <div class="card" style="overflow:hidden;">
-        <table class="job-table" id="jobTable">
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>File</th>
-              <th>Options</th>
-              <th>Submitted</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="jobTableBody"></tbody>
-        </table>
-        <!-- Mobile job list -->
-        <div id="jobMobileList"></div>
-        <div id="emptyJobs" class="empty hidden">
-          <span class="empty-icon">📭</span>
-          <h3>No jobs found</h3>
-          <p>No print jobs in this category.</p>
+      <!-- ========================
+           TAB 2: ANALYTICS & ANALYSIS
+           ======================== -->
+      <div id="ownerPanelAnalysis" class="hidden">
+        <!-- Key Metrics Row (Color Theme Cards) -->
+        <div class="analytics-grid">
+          <div class="theme-card theme-card-indigo">
+            <div class="theme-card-title">💰 Est. Total Revenue</div>
+            <div class="theme-card-value" id="anEstRevenue">RM 0.00</div>
+            <div class="theme-card-sub" id="anRevenueSub">From all completed & active jobs</div>
+          </div>
+          <div class="theme-card theme-card-emerald">
+            <div class="theme-card-title">✅ Completed Orders</div>
+            <div class="theme-card-value" id="anCompletedCount">0</div>
+            <div class="theme-card-sub" id="anCompletedSub">100% fulfilled</div>
+          </div>
+          <div class="theme-card theme-card-violet">
+            <div class="theme-card-title">🎨 Color Print Ratio</div>
+            <div class="theme-card-value" id="anColorRatio">0%</div>
+            <div class="theme-card-sub" id="anColorSub">vs 0% Monochrome</div>
+          </div>
+          <div class="theme-card theme-card-amber">
+            <div class="theme-card-title">📑 Avg Copies / Job</div>
+            <div class="theme-card-value" id="anAvgCopies">1.0</div>
+            <div class="theme-card-sub" id="anCopiesSub">Average volume per submission</div>
+          </div>
         </div>
+
+        <!-- Breakdown Cards -->
+        <div class="analytics-card-grid">
+
+          <!-- Print Mode & Paper Breakdown -->
+          <div class="card">
+            <div class="card-body">
+              <h3 style="margin-bottom:16px;">🎨 Print Mode Breakdown</h3>
+              <div class="dist-item">
+                <div class="dist-label"><span>🖤 Monochrome (RM 0.10/pg)</span><span id="distMonoPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-indigo" id="distMonoBar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>🌈 Full Color (RM 0.50/pg)</span><span id="distColorPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-violet" id="distColorBar" style="width:0%;"></div></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <h3 style="margin-bottom:16px;">📋 Paper Size Distribution</h3>
+              <div class="dist-item">
+                <div class="dist-label"><span>A4 (Standard)</span><span id="distA4Pct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-emerald" id="distA4Bar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>Letter</span><span id="distLetterPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-blue" id="distLetterBar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>A3 (Large)</span><span id="distA3Pct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-amber" id="distA3Bar" style="width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pickup Time & Top Customers -->
+          <div class="card">
+            <div class="card-body">
+              <h3 style="margin-bottom:16px;">⏰ Preferred Pickup Slots</h3>
+              <div class="dist-item">
+                <div class="dist-label"><span>As Soon As Ready</span><span id="distReadyPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-emerald" id="distReadyBar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>Morning (8am - 12pm)</span><span id="distMornPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-amber" id="distMornBar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>Afternoon (12pm - 4pm)</span><span id="distAftPct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-indigo" id="distAftBar" style="width:0%;"></div></div>
+              </div>
+              <div class="dist-item">
+                <div class="dist-label"><span>Evening (4pm - 6pm)</span><span id="distEvePct">0%</span></div>
+                <div class="dist-track"><div class="dist-bar dist-bar-violet" id="distEveBar" style="width:0%;"></div></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <h3 style="margin-bottom:12px;">👥 Active Customers Breakdown</h3>
+              <div id="topCustomersList" style="font-size:13px;color:var(--text-2);"></div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
+
     </div>
   </div>
 
