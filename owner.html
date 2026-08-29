@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Dashboard — PrintHub</title>
+  <meta name="description" content="PrintHub owner dashboard — manage all print jobs, update statuses, and print directly from your browser." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== OWNER DASHBOARD SPECIFIC ===== */
+
+    /* PIN Login */
+    .pin-wall {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 100px 24px 40px;
+    }
+    .pin-box {
+      width: 100%; max-width: 400px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 48px 40px;
+      text-align: center;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-lg);
+    }
+    .pin-icon {
+      width: 64px; height: 64px;
+      background: var(--gradient-main);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+      box-shadow: var(--shadow-glow);
+    }
+    .pin-title { font-family: var(--font-heading); font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .pin-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+
+    .pin-inputs {
+      display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;
+    }
+    .pin-digit {
+      width: 52px; height: 60px;
+      background: rgba(255,255,255,0.04);
+      border: 2px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 24px; font-weight: 700;
+      text-align: center;
+      outline: none;
+      transition: var(--transition);
+      -webkit-text-security: disc;
+    }
+    .pin-digit:focus { border-color: var(--accent-blue); background: rgba(79,142,247,0.06); box-shadow: 0 0 0 3px rgba(79,142,247,0.12); }
+    .pin-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* Dashboard Layout */
+    .dashboard {
+      padding-top: 88px;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    .dashboard-header {
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 20px 0;
+      margin-bottom: 32px;
+    }
+    .dashboard-header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dashboard-title {
+      font-family: var(--font-heading);
+      font-size: 22px; font-weight: 800;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 24px;
+    }
+    .filter-chip {
+      padding: 7px 16px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--glass-border);
+      background: none;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .filter-chip:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+    .filter-chip.active { background: rgba(79,142,247,0.12); border-color: var(--accent-blue); color: var(--accent-blue); }
+    .filter-count {
+      background: rgba(79,142,247,0.2);
+      border-radius: var(--radius-pill);
+      padding: 1px 7px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .search-input-wrapper {
+      position: relative; margin-left: auto;
+    }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 14px; pointer-events: none;
+    }
+    .search-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 9px 16px 9px 36px;
+      outline: none;
+      width: 220px;
+      transition: var(--transition);
+    }
+    .search-input:focus { border-color: var(--accent-blue); background: rgba(79,142,247,0.06); }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    /* Jobs Grid */
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* Job Detail Expand */
+    .job-detail {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .job-detail.open { display: block; }
+    .job-detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .detail-item label {
+      display: block; font-size: 11px;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .detail-item span { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+    /* Status Dropdown */
+    .status-select {
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .status-select:focus { border-color: var(--accent-blue); }
+    .status-select option { background: #0d1220; }
+
+    /* Auto-refresh indicator */
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--accent-green);
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.2);
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+    }
+    .live-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse-live 2s infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Print preview area (hidden) */
+    #printFrame { display: none; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .dashboard-header-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .filter-bar { gap: 8px; }
+      .search-input-wrapper { margin-left: 0; width: 100%; }
+      .search-input { width: 100%; }
+      .job-detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orbs">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-inner">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">P</div>
+          <span class="logo-text">Print<span>Hub</span></span>
+        </a>
+        <div id="ownerBadge" class="hidden" style="display:none;">
+          <span class="live-dot">Live Dashboard</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="ownerLogoutBtn" style="display:none;" onclick="ownerLogout()">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PIN Wall -->
+  <div id="pinWall" class="pin-wall">
+    <div class="pin-box fade-in">
+      <div class="pin-icon">🔐</div>
+      <h1 class="pin-title">Owner Access</h1>
+      <p class="pin-subtitle">Enter your 4-digit PIN to access the dashboard</p>
+      <div class="pin-inputs">
+        <input type="password" maxlength="1" class="pin-digit" id="pin0" inputmode="numeric" pattern="[0-9]" />
+        <input type="password" maxlength="1" class="pin-digit" id="pin1" inputmode="numeric" pattern="[0-9]" />
+        <input type="password" maxlength="1" class="pin-digit" id="pin2" inputmode="numeric" pattern="[0-9]" />
+        <input type="password" maxlength="1" class="pin-digit" id="pin3" inputmode="numeric" pattern="[0-9]" />
+      </div>
+      <p class="pin-hint">Default PIN: <strong>1234</strong> (change in settings)</p>
+      <button class="btn btn-primary btn-full" id="pinSubmitBtn" onclick="verifyPin()">
+        Unlock Dashboard →
+      </button>
+    </div>
+  </div>
+
+  <!-- Owner Dashboard -->
+  <div id="ownerDashboard" class="dashboard hidden">
+    <div class="dashboard-header">
+      <div class="container">
+        <div class="dashboard-header-inner">
+          <div>
+            <h1 class="dashboard-title">🖨️ Print Job Dashboard</h1>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:4px;" id="dashboardSubtitle">Loading...</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="live-dot">Auto-refresh: 30s</span>
+            <button class="btn btn-secondary btn-sm" onclick="refreshDashboard()">🔄 Refresh</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Stats Bar -->
+      <div class="stats-bar mb-24" id="statsBar">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-blue">📋</div>
+          <div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Jobs</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">⏳</div>
+          <div><div class="stat-value" id="statPending">0</div><div class="stat-label">Pending</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-blue">🖨️</div>
+          <div><div class="stat-value" id="statPrinting">0</div><div class="stat-label">Printing</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-green">✅</div>
+          <div><div class="stat-value" id="statCompleted">0</div><div class="stat-label">Completed Today</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">All <span class="filter-count" id="countAll">0</span></button>
+        <button class="filter-chip" data-filter="pending" onclick="setFilter('pending', this)">⏳ Pending <span class="filter-count" id="countPending">0</span></button>
+        <button class="filter-chip" data-filter="printing" onclick="setFilter('printing', this)">🖨️ Printing <span class="filter-count" id="countPrinting">0</span></button>
+        <button class="filter-chip" data-filter="ready" onclick="setFilter('ready', this)">📦 Ready <span class="filter-count" id="countReady">0</span></button>
+        <button class="filter-chip" data-filter="completed" onclick="setFilter('completed', this)">✅ Completed <span class="filter-count" id="countCompleted">0</span></button>
+        <button class="filter-chip" data-filter="cancelled" onclick="setFilter('cancelled', this)">❌ Cancelled <span class="filter-count" id="countCancelled">0</span></button>
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search customer, file..." oninput="renderJobs()" />
+        </div>
+      </div>
+
+      <!-- Jobs Grid -->
+      <div class="jobs-grid" id="jobsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Print Frame (hidden) -->
+  <iframe id="printFrame" style="display:none;"></iframe>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="owner.js"></script>
+</body>
+</html>

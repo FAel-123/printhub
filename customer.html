@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Print Job — PrintHub</title>
+  <meta name="description" content="Upload your file and submit a print job. Choose colour or monochrome, number of copies, and paper size." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== CUSTOMER PAGE SPECIFIC ===== */
+    .portal-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: flex-start;
+      padding-bottom: 60px;
+    }
+
+    /* Auth Wall */
+    .auth-wall {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 24px 40px;
+    }
+    .auth-box {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 42px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-lg);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-logo {
+      width: 60px; height: 60px;
+      background: var(--gradient-main);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 28px; font-weight: 800; color: #fff;
+      margin: 0 auto 16px;
+      box-shadow: var(--shadow-glow);
+    }
+    .auth-title { font-family: var(--font-heading); font-size: 26px; font-weight: 800; }
+    .auth-subtitle { color: var(--text-secondary); font-size: 14px; margin-top: 6px; }
+
+    /* Main form */
+    .form-section-title {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-section-title .icon { font-size: 18px; }
+
+    /* Summary Sidebar */
+    .summary-card {
+      position: sticky;
+      top: 88px;
+    }
+    .summary-title {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .summary-row:last-of-type { border-bottom: none; }
+    .summary-key { color: var(--text-muted); }
+    .summary-val { font-weight: 600; color: var(--text-primary); text-align: right; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Orders list */
+    .order-item {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .order-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+    .order-item.status-pending   ::before, .order-item.status-pending::before   { background: var(--accent-orange); }
+    .order-item.status-printing  ::before, .order-item.status-printing::before  { background: var(--accent-blue); }
+    .order-item.status-ready     ::before, .order-item.status-ready::before     { background: var(--accent-purple); }
+    .order-item.status-completed ::before, .order-item.status-completed::before { background: var(--accent-green); }
+    .order-item.status-cancelled ::before, .order-item.status-cancelled::before { background: var(--accent-red); }
+
+    .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .order-file { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+    .order-id { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .order-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+    .order-meta-tag {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .order-time { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .portal-layout {
+        grid-template-columns: 1fr;
+      }
+      .summary-card { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orbs">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-inner">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">P</div>
+          <span class="logo-text">Print<span>Hub</span></span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html#pricing">Pricing</a></li>
+          <li><a href="owner.html">Owner Login</a></li>
+        </ul>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn" style="display:none;" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Auth Wall -->
+  <div id="authWall" class="auth-wall">
+    <div class="auth-box fade-in">
+      <div class="auth-header">
+        <div class="auth-logo">P</div>
+        <h1 class="auth-title">Welcome to PrintHub</h1>
+        <p class="auth-subtitle">Sign in or create an account to submit a print job</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs mb-24" style="margin: 0 auto 28px; display: flex; width: 100%;">
+        <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginStudentId">Student ID</label>
+          <input type="text" id="loginStudentId" class="form-input" placeholder="e.g. 2024-12345" />
+        </div>
+        <button class="btn btn-primary btn-full mt-8" id="loginBtn" onclick="handleLogin()">
+          Sign In → Continue
+        </button>
+        <p class="text-center mt-16" style="font-size:13px;color:var(--text-muted);">
+          Don't have an account? <button onclick="switchTab('register')" style="background:none;border:none;color:var(--accent-blue);cursor:pointer;font-size:13px;">Register here</button>
+        </p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="hidden">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regName">Full Name</label>
+            <input type="text" id="regName" class="form-input" placeholder="Ahmad Razif" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regStudentId">Student ID</label>
+            <input type="text" id="regStudentId" class="form-input" placeholder="2024-12345" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regEmail">Email Address</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPhone">Phone Number</label>
+          <input type="tel" id="regPhone" class="form-input" placeholder="01x-xxxxxxx" />
+        </div>
+        <button class="btn btn-primary btn-full mt-8" id="registerBtn" onclick="handleRegister()">
+          Create Account & Continue
+        </button>
+        <p class="text-center mt-16" style="font-size:13px;color:var(--text-muted);">
+          Already have an account? <button onclick="switchTab('login')" style="background:none;border:none;color:var(--accent-blue);cursor:pointer;font-size:13px;">Sign in</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Portal (shown after login) -->
+  <div id="customerPortal" class="hidden" style="padding-top: 88px;">
+    <!-- Welcome Bar -->
+    <div style="background: rgba(79,142,247,0.06); border-bottom: 1px solid var(--glass-border);">
+      <div class="container" style="padding: 16px 24px;">
+        <div class="flex-between">
+          <div>
+            <span style="font-size:14px;color:var(--text-secondary);">Welcome back, </span>
+            <span id="welcomeName" style="font-weight:700;font-size:14px;color:var(--text-primary);">Student</span>
+            <span style="font-size:13px;color:var(--text-muted);margin-left:8px;" id="welcomeId"></span>
+          </div>
+          <div class="tabs" style="margin: 0;">
+            <button class="tab-btn active" id="tabSubmit" onclick="showPortalTab('submit')">Submit Job</button>
+            <button class="tab-btn" id="tabOrders" onclick="showPortalTab('orders')">My Orders</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" style="padding-top: 32px;">
+      <!-- Submit Job Tab -->
+      <div id="portalSubmit">
+        <div class="portal-layout">
+          <!-- Left: Form -->
+          <div>
+            <!-- File Upload -->
+            <div class="card mb-24">
+              <div class="card-body">
+                <div class="form-section-title"><span class="icon">📤</span> Upload Your File</div>
+                <div class="file-upload-zone" id="uploadZone">
+                  <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png,.gif" onchange="handleFileSelect(this)" />
+                  <span class="upload-icon">📄</span>
+                  <div class="upload-text">Drop your file here or <span>browse</span></div>
+                  <div class="upload-hint">PDF, Word, JPG, PNG — max 20MB</div>
+                </div>
+                <div id="filePreview" class="hidden"></div>
+              </div>
+            </div>
+
+            <!-- Print Options -->
+            <div class="card mb-24">
+              <div class="card-body">
+                <div class="form-section-title"><span class="icon">⚙️</span> Print Options</div>
+
+                <div class="form-group">
+                  <label class="form-label">Print Mode</label>
+                  <div class="option-grid">
+                    <label class="option-card selected" id="optMono" for="colorMono">
+                      <input type="radio" name="colorMode" id="colorMono" value="monochrome" checked onchange="updateOptions()" />
+                      <span class="option-card-icon">🖤</span>
+                      <span class="option-card-label">Monochrome</span>
+                      <span class="option-card-desc">Black & white</span>
+                    </label>
+                    <label class="option-card" id="optColor" for="colorColor">
+                      <input type="radio" name="colorMode" id="colorColor" value="color" onchange="updateOptions()" />
+                      <span class="option-card-icon">🌈</span>
+                      <span class="option-card-label">Full Color</span>
+                      <span class="option-card-desc">Vibrant printing</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Paper Size</label>
+                    <select class="form-select" id="paperSize" onchange="updateOptions()">
+                      <option value="A4">A4 (210 × 297mm)</option>
+                      <option value="Letter">Letter (8.5 × 11in)</option>
+                      <option value="A3">A3 (297 × 420mm)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Sides</label>
+                    <select class="form-select" id="sides" onchange="updateOptions()">
+                      <option value="single">Single-sided</option>
+                      <option value="double">Double-sided</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Number of Copies</label>
+                  <div class="counter-input">
+                    <button class="counter-btn" onclick="changeCopies(-1)">−</button>
+                    <span class="counter-value" id="copiesDisplay">1</span>
+                    <button class="counter-btn" onclick="changeCopies(1)">+</button>
+                    <span style="font-size:13px;color:var(--text-muted);margin-left:4px;">copies</span>
+                  </div>
+                </div>
+
+                <div class="form-group mb-0">
+                  <label class="form-label">Special Instructions (optional)</label>
+                  <textarea class="form-textarea" id="specialInstructions" placeholder="e.g. Print pages 1–5 only, landscape orientation, staple, etc."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Pickup -->
+            <div class="card mb-24">
+              <div class="card-body">
+                <div class="form-section-title"><span class="icon">📞</span> Contact & Pickup</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" id="contactPhone" class="form-input" placeholder="01x-xxxxxxx" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Preferred Pickup Time</label>
+                    <select class="form-select" id="pickupTime">
+                      <option>As soon as ready</option>
+                      <option>Morning (8am – 12pm)</option>
+                      <option>Afternoon (12pm – 4pm)</option>
+                      <option>Evening (4pm – 6pm)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Summary -->
+          <div class="summary-card">
+            <div class="card">
+              <div class="card-body">
+                <div class="summary-title">🧾 Order Summary</div>
+
+                <div class="summary-row">
+                  <span class="summary-key">File</span>
+                  <span class="summary-val" id="sumFile">No file selected</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-key">Mode</span>
+                  <span class="summary-val" id="sumMode">Monochrome</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-key">Paper</span>
+                  <span class="summary-val" id="sumPaper">A4</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-key">Sides</span>
+                  <span class="summary-val" id="sumSides">Single-sided</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-key">Copies</span>
+                  <span class="summary-val" id="sumCopies">1</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-key">Pickup</span>
+                  <span class="summary-val" id="sumPickup">As soon as ready</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="price-display mb-16">
+                  <div>
+                    <div class="price-label">Estimated Total</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Pay on collection</div>
+                  </div>
+                  <div class="price-value" id="priceEstimate">RM 0.10</div>
+                </div>
+
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
+                  ⓘ Final price depends on actual page count. You'll pay at the counter when collecting.
+                </div>
+
+                <button class="btn btn-primary btn-full btn-lg" id="submitBtn" onclick="submitJob()">
+                  🖨️ Submit Print Job
+                </button>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="card mt-16" style="background:rgba(0,229,160,0.04);border-color:rgba(0,229,160,0.15);">
+              <div class="card-body" style="padding:18px;">
+                <div style="font-size:13px;color:var(--accent-green);font-weight:600;margin-bottom:10px;">💡 Tips</div>
+                <ul style="font-size:12px;color:var(--text-secondary);line-height:1.8;padding-left:16px;">
+                  <li>PDF is the most reliable format</li>
+                  <li>Check your page count before submitting</li>
+                  <li>Add instructions for specific formatting</li>
+                  <li>Track your job in "My Orders" tab</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Orders Tab -->
+      <div id="portalOrders" class="hidden" style="max-width: 860px; margin: 0 auto; padding-bottom: 60px;">
+        <div class="flex-between mb-24">
+          <h2 style="font-family:var(--font-heading);font-size:22px;font-weight:800;">My Print Orders</h2>
+          <button class="btn btn-secondary btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+        </div>
+        <div id="ordersList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal" style="text-align:center;">
+      <div style="font-size:64px;margin-bottom:16px;">🎉</div>
+      <div class="modal-title" style="text-align:center;font-size:26px;">Job Submitted!</div>
+      <p style="color:var(--text-secondary);margin-bottom:8px;">Your print job has been queued successfully.</p>
+      <div id="successOrderId" style="font-family:monospace;font-size:13px;color:var(--accent-blue);background:rgba(79,142,247,0.08);padding:10px 16px;border-radius:var(--radius-sm);margin:16px 0;display:inline-block;"></div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:28px;">You can track your order status in the "My Orders" tab.</p>
+      <div class="flex-center gap-12">
+        <button class="btn btn-primary" onclick="closeModal()">Track My Order →</button>
+        <button class="btn btn-secondary" onclick="closeModalAndReset()">Submit Another</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="customer.js"></script>
+</body>
+</html>

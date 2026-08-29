@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrintHub</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-inner">
+        <div class="nav-brand" id="navBrand">PrintHub</div>
+        <div class="nav-right">
+          <div class="nav-user hidden" id="navUser">
+            Signed in as <strong id="navUserName"></strong>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading -->
+  <div id="pageLoading" class="flex-center" style="min-height: calc(100vh - 56px);">
+    <div class="spinner spinner-dark"></div>
+  </div>
+
+  <!-- ========================
+       CUSTOMER VIEW
+       ======================== -->
+  <div id="customerView" class="main hidden">
+    <div class="container">
+      <div style="max-width: 680px; margin: 0 auto;">
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" id="tabNewJob" onclick="showTab('newJob')">New Job</button>
+          <button class="tab" id="tabOrders" onclick="showTab('orders')">My Orders</button>
+        </div>
+
+        <!-- ---- New Job Tab ---- -->
+        <div id="panelNewJob">
+
+          <!-- Upload -->
+          <div class="mb-24">
+            <div class="section-title">File</div>
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" onchange="onFileSelect(this)" />
+              <span class="upload-icon">↑</span>
+              <div class="upload-label">Drop file here or <span style="text-decoration:underline;">browse</span></div>
+              <div class="upload-hint">PDF, Word, JPG, PNG — max 20 MB</div>
+            </div>
+            <div id="filePill" class="hidden"></div>
+          </div>
+
+          <!-- Print Options -->
+          <div class="mb-24">
+            <div class="section-title">Print Mode</div>
+            <div class="radio-group">
+              <label class="radio-option selected" id="optMono" for="rdMono">
+                <input type="radio" name="colorMode" id="rdMono" value="monochrome" checked onchange="onOptionChange()" />
+                <span class="radio-option-icon">◾</span>
+                <div>
+                  <div class="radio-option-text">Monochrome</div>
+                  <div class="radio-option-sub">RM 0.10 / page</div>
+                </div>
+                <span class="radio-check"></span>
+              </label>
+              <label class="radio-option" id="optColor" for="rdColor">
+                <input type="radio" name="colorMode" id="rdColor" value="color" onchange="onOptionChange()" />
+                <span class="radio-option-icon">🟦</span>
+                <div>
+                  <div class="radio-option-text">Full Color</div>
+                  <div class="radio-option-sub">RM 0.50 / page</div>
+                </div>
+                <span class="radio-check"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row mb-24">
+            <div class="form-group">
+              <label class="label" for="paperSize">Paper Size</label>
+              <select class="select" id="paperSize" onchange="onOptionChange()">
+                <option value="A4">A4 (210 × 297 mm)</option>
+                <option value="Letter">Letter (8.5 × 11 in)</option>
+                <option value="A3">A3 (297 × 420 mm)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label" for="sides">Sides</label>
+              <select class="select" id="sides" onchange="onOptionChange()">
+                <option value="single">Single-sided</option>
+                <option value="double">Double-sided</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-24">
+            <label class="label">Copies</label>
+            <div class="counter">
+              <button class="counter-btn" onclick="changeCopies(-1)">−</button>
+              <div class="counter-num" id="copiesNum">1</div>
+              <button class="counter-btn" onclick="changeCopies(1)">+</button>
+            </div>
+          </div>
+
+          <div class="form-group mb-24">
+            <label class="label" for="instructions">Special Instructions <span style="font-weight:400;color:var(--text-4);">(optional)</span></label>
+            <textarea class="textarea" id="instructions" placeholder="e.g. Print pages 1–5, staple, landscape..."></textarea>
+          </div>
+
+          <div class="form-group mb-24">
+            <label class="label" for="pickupTime">Preferred Pickup</label>
+            <select class="select" id="pickupTime">
+              <option>As soon as ready</option>
+              <option>Morning (8am – 12pm)</option>
+              <option>Afternoon (12pm – 4pm)</option>
+              <option>Evening (4pm – 6pm)</option>
+            </select>
+          </div>
+
+          <!-- Price estimate -->
+          <div class="price-row">
+            <div>
+              <div class="price-label">Estimated Total</div>
+              <div class="price-note">Pay on collection · Final price by page count</div>
+            </div>
+            <div class="price-value" id="priceEst">RM 0.10+</div>
+          </div>
+
+          <button class="btn btn-primary btn-full btn-lg" id="submitBtn" onclick="submitJob()">
+            Submit Print Job
+          </button>
+
+          <p class="text-xs text-muted text-right mt-8">Supported: PDF, Word, JPG, PNG</p>
+        </div>
+
+        <!-- ---- My Orders Tab ---- -->
+        <div id="panelOrders" class="hidden">
+          <div class="flex-between mb-16">
+            <h2>My Orders</h2>
+            <button class="btn btn-secondary btn-sm" onclick="loadOrders()">Refresh</button>
+          </div>
+          <div id="ordersList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================
+       OWNER VIEW
+       ======================== -->
+  <div id="ownerView" class="main hidden">
+    <div class="container">
+
+      <!-- Stats -->
+      <div class="stats-row" id="statsRow"></div>
+
+      <!-- Toolbar -->
+      <div class="flex-between mb-16" style="flex-wrap:wrap;gap:10px;">
+        <div class="filter-bar" id="filterBar"></div>
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search customer, file…" oninput="renderJobs()" />
+        </div>
+      </div>
+
+      <!-- Jobs Table -->
+      <div class="card" style="overflow:hidden;">
+        <table class="job-table" id="jobTable">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>File</th>
+              <th>Options</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="jobTableBody"></tbody>
+        </table>
+        <!-- Mobile job list -->
+        <div id="jobMobileList"></div>
+        <div id="emptyJobs" class="empty hidden">
+          <span class="empty-icon">📭</span>
+          <h3>No jobs found</h3>
+          <p>No print jobs in this category.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================
+       Success Modal
+       ======================== -->
+  <div id="successOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:white;border-radius:12px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.15);">
+      <div style="font-size:40px;margin-bottom:12px;">✓</div>
+      <h2 style="margin-bottom:8px;">Job Submitted</h2>
+      <p style="margin-bottom:6px;">Your print job has been queued.</p>
+      <div id="successId" style="font-family:monospace;font-size:12px;color:var(--text-4);margin-bottom:24px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-secondary" onclick="closeSuccess()">Submit Another</button>
+        <button class="btn btn-primary" onclick="viewOrders()">View Orders</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrintHub — Sign In</title>
+  <meta name="description" content="PrintHub college print service. Sign in to submit your print job." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Auth Page -->
+  <div class="auth-page" id="authPage">
+    <div class="auth-header">
+      <div class="auth-brand">PrintHub</div>
+      <div class="auth-tagline">College Print Service</div>
+    </div>
+
+    <div class="auth-card">
+      <!-- Sign In Form -->
+      <div id="signInView">
+        <h2 style="margin-bottom:20px;">Sign in</h2>
+        <div class="form-group">
+          <label class="label" for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" class="input" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="label" for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" class="input" placeholder="••••••••" autocomplete="current-password" />
+          <div class="error-msg hidden" id="loginError"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg mt-20" id="signInBtn" onclick="handleSignIn()">
+          Sign in
+        </button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerView" class="hidden">
+        <h2 style="margin-bottom:20px;">Create account</h2>
+        <div class="form-group">
+          <label class="label" for="regName">Full Name</label>
+          <input type="text" id="regName" class="input" placeholder="Ahmad Razif" autocomplete="name" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label" for="regStudentId">Student ID</label>
+            <input type="text" id="regStudentId" class="input" placeholder="2024-12345" />
+          </div>
+          <div class="form-group">
+            <label class="label" for="regPhone">Phone</label>
+            <input type="tel" id="regPhone" class="input" placeholder="01x-xxxxxxx" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label" for="regEmail">Email</label>
+          <input type="email" id="regEmail" class="input" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="label" for="regPassword">Password</label>
+          <input type="password" id="regPassword" class="input" placeholder="min. 6 characters" autocomplete="new-password" />
+          <div class="error-msg hidden" id="registerError"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg mt-20" id="registerBtn" onclick="handleRegister()">
+          Create account
+        </button>
+      </div>
+    </div>
+
+    <!-- Toggle Sign In / Register -->
+    <div class="auth-footer" id="toggleSignIn">
+      Don't have an account? <button onclick="showRegister()">Register</button>
+    </div>
+    <div class="auth-footer hidden" id="toggleRegister">
+      Already have an account? <button onclick="showSignIn()">Sign in</button>
+    </div>
+  </div>
+
+  <!-- Loading screen (while checking session) -->
+  <div id="loadingScreen" class="flex-center" style="min-height:100vh;display:none;">
+    <div class="spinner spinner-dark"></div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => { t.style.animation = 'toast-out 0.2s ease forwards'; setTimeout(() => t.remove(), 200); }, 3500);
+    }
+
+    function setLoading(btnId, loading, label) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading ? '<span class="spinner"></span>' : label;
+    }
+
+    function showRegister() {
+      document.getElementById('signInView').classList.add('hidden');
+      document.getElementById('registerView').classList.remove('hidden');
+      document.getElementById('toggleSignIn').classList.add('hidden');
+      document.getElementById('toggleRegister').classList.remove('hidden');
+    }
+
+    function showSignIn() {
+      document.getElementById('registerView').classList.add('hidden');
+      document.getElementById('signInView').classList.remove('hidden');
+      document.getElementById('toggleRegister').classList.add('hidden');
+      document.getElementById('toggleSignIn').classList.remove('hidden');
+    }
+
+    async function handleSignIn() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.classList.add('hidden');
+
+      if (!email || !password) { showToast('Please fill in all fields.', 'error'); return; }
+
+      setLoading('signInBtn', true, 'Sign in');
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      setLoading('signInBtn', false, 'Sign in');
+
+      if (error) {
+        errEl.textContent = error.message === 'Invalid login credentials'
+          ? 'Incorrect email or password.'
+          : error.message;
+        errEl.classList.remove('hidden');
+        return;
+      }
+      window.location.href = 'app.html';
+    }
+
+    async function handleRegister() {
+      const name      = document.getElementById('regName').value.trim();
+      const studentId = document.getElementById('regStudentId').value.trim();
+      const phone     = document.getElementById('regPhone').value.trim();
+      const email     = document.getElementById('regEmail').value.trim();
+      const password  = document.getElementById('regPassword').value;
+      const errEl     = document.getElementById('registerError');
+      errEl.classList.add('hidden');
+
+      if (!name || !email || !password) { showToast('Please fill in all required fields.', 'error'); return; }
+      if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
+
+      setLoading('registerBtn', true, 'Create account');
+      const { error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { name, student_id: studentId, phone } }
+      });
+      setLoading('registerBtn', false, 'Create account');
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.classList.remove('hidden');
+        return;
+      }
+      showToast('Account created! Signing you in...', 'success');
+      setTimeout(() => window.location.href = 'app.html', 1000);
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (!document.getElementById('signInView').classList.contains('hidden')) handleSignIn();
+      else handleRegister();
+    });
+
+    // Check existing session on load
+    (async () => {
+      document.getElementById('loadingScreen').style.display = 'flex';
+      document.getElementById('authPage').style.display = 'none';
+      const { data } = await sb.auth.getSession();
+      if (data.session) {
+        window.location.href = 'app.html';
+      } else {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('authPage').style.display = 'flex';
+      }
+    })();
+  </script>
+</body>
+</html>
