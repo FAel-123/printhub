@@ -253,8 +253,23 @@ if (zone) {
 }
 
 /* ============================
-   CUSTOMER — OPTIONS & PAYMENT
+   CUSTOMER — OPTIONS & PAYMENT (DUITNOW DYNAMIC QR)
    ============================ */
+function getCalculatedPrice() {
+  const isMono = $('rdMono')?.checked;
+  const rate = isMono ? 0.10 : 0.50;
+  return (rate * copies).toFixed(2);
+}
+
+function updateDuitNowQr() {
+  const price = getCalculatedPrice();
+  if ($('duitnowQrPrice')) $('duitnowQrPrice').textContent = `RM ${price}`;
+  const qrData = encodeURIComponent(`DuitNowQR:PrintHub:RozaliIsmail:RM_${price}`);
+  if ($('duitnowQrImg')) {
+    $('duitnowQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}`;
+  }
+}
+
 function changeCopies(delta) {
   copies = Math.max(1, Math.min(99, copies + delta));
   $('copiesNum').textContent = copies;
@@ -265,17 +280,30 @@ function onOptionChange() {
   const isMono = $('rdMono').checked;
   $('optMono').classList.toggle('selected', isMono);
   $('optColor').classList.toggle('selected', !isMono);
-  const rate = isMono ? 0.10 : 0.50;
-  $('priceEst').textContent = `RM ${(rate * copies).toFixed(2)}+`;
+  const price = getCalculatedPrice();
+  $('priceEst').textContent = `RM ${price}+`;
+  updateDuitNowQr();
 }
 
 function onPaymentChange() {
-  const isCash = $('payCash').checked;
-  $('optPayCash').classList.toggle('selected', isCash);
-  $('optPayToyyib').classList.toggle('selected', !isCash);
-  $('payNote').textContent = isCash
-    ? 'Pay at counter · Final total by page count'
-    : 'ToyyibPay Gateway · FPX Online Banking';
+  const isCash    = $('payCash')?.checked;
+  const isDuitnow = $('payDuitnow')?.checked;
+  const isToyyib  = $('payToyyib')?.checked;
+
+  $('optPayCash')?.classList.toggle('selected', isCash);
+  $('optPayDuitnow')?.classList.toggle('selected', isDuitnow);
+  $('optPayToyyib')?.classList.toggle('selected', isToyyib);
+
+  if ($('duitnowBox')) $('duitnowBox').classList.toggle('hidden', !isDuitnow);
+
+  if (isDuitnow) {
+    updateDuitNowQr();
+    $('payNote').textContent = 'Scan DuitNow QR with MAE / TNG eWallet / Banking App';
+  } else if (isToyyib) {
+    $('payNote').textContent = 'ToyyibPay Gateway · FPX Online Banking';
+  } else {
+    $('payNote').textContent = 'Pay at counter · Final total by page count';
+  }
 }
 
 /* ============================
@@ -288,10 +316,18 @@ async function submitJob() {
     return;
   }
 
-  const custName  = $('custName')?.value.trim() || 'Guest Student';
-  const custPhone = $('custPhone')?.value.trim() || '';
-  const isToyyib  = $('payToyyib')?.checked;
-  const guestId   = getGuestId();
+  const custName   = $('custName')?.value.trim() || 'Guest Student';
+  const custPhone  = $('custPhone')?.value.trim() || '';
+  const isDuitnow  = $('payDuitnow')?.checked;
+  const isToyyib   = $('payToyyib')?.checked;
+  const receiptRef = $('receiptRef')?.value.trim() || '';
+  const guestId    = getGuestId();
+
+  const payMethod  = isDuitnow ? 'duitnow' : isToyyib ? 'toyyibpay' : 'cash';
+  let userNotes    = $('instructions')?.value.trim() || '';
+  if (isDuitnow && receiptRef) {
+    userNotes += ` [DuitNow Ref: ${receiptRef}]`;
+  }
 
   setLoading('submitBtn', true, 'Confirm & Place Order 🖨️');
 
@@ -312,7 +348,7 @@ async function submitJob() {
     const { data: job, error: insertErr } = await sb.from('jobs').insert({
       customer_id:         guestId,
       customer_name:       custName,
-      customer_student_id: custPhone,
+      customer_student_id: custPhone ? `${custPhone} (${payMethod.toUpperCase()})` : payMethod.toUpperCase(),
       file_name:           selectedFile.name,
       file_path:           finalPath,
       file_size:           selectedFile.size,
@@ -321,15 +357,17 @@ async function submitJob() {
       sides:               $('sides').value,
       copies:              copies,
       pickup_time:         $('pickupTime').value,
-      instructions:        $('instructions').value.trim(),
-      status:              'pending',
+      instructions:        userNotes,
+      status:              isDuitnow ? 'pending' : 'pending',
     }).select().single();
 
     if (insertErr) throw new Error('Failed to save order: ' + insertErr.message);
 
     setLoading('submitBtn', false, 'Confirm & Place Order 🖨️');
 
-    if (isToyyib) {
+    if (isDuitnow) {
+      showToast('DuitNow Order submitted! Owner will verify your payment.', 'success');
+    } else if (isToyyib) {
       showToast('Order saved! Directing to ToyyibPay portal...', 'info');
     }
 
@@ -337,7 +375,8 @@ async function submitJob() {
     if (custPhone) localStorage.setItem('printhub_last_phone', custPhone);
 
     // Show success modal
-    $('successId').textContent = 'Job ID: #' + job.id.slice(0, 8).toUpperCase() + (isToyyib ? ' · ToyyibPay Selected' : ' · Cash on Pickup');
+    const methodTag = isDuitnow ? ' · 📱 DuitNow QR' : isToyyib ? ' · 💳 ToyyibPay' : ' · 💵 Cash on Pickup';
+    $('successId').textContent = 'Job ID: #' + job.id.slice(0, 8).toUpperCase() + methodTag;
     $('successOverlay').classList.remove('hidden');
 
   } catch (err) {
