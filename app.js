@@ -63,6 +63,14 @@ function setLoading(btnId, loading, label) {
    AUTH
    ============================ */
 async function init() {
+  if (localStorage.getItem('printhub_owner_session') === 'true') {
+    const ownerData = JSON.parse(localStorage.getItem('printhub_owner_user') || '{}');
+    currentUser = { id: 'owner-session', email: OWNER_EMAIL };
+    currentProfile = { id: 'owner-session', name: ownerData.name || 'Owner', role: 'owner', email: OWNER_EMAIL };
+    showApp();
+    return;
+  }
+
   const { data } = await sb.auth.getSession();
   if (!data.session) {
     window.location.href = 'index.html';
@@ -108,6 +116,8 @@ async function loadProfile() {
 }
 
 async function signOut() {
+  localStorage.removeItem('printhub_owner_session');
+  localStorage.removeItem('printhub_owner_user');
   await sb.auth.signOut();
   window.location.href = 'index.html';
 }

@@ -374,10 +374,14 @@
 
         <div class="field">
           <label for="siEmail">Email address</label>
-          <input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email" />
+          <input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email" oninput="checkOwnerNotice(this.value)" />
+          <div id="ownerNotice" class="info-box hidden" style="background:#EEF2FF;border-left-color:#4F46E5;color:#3730A3;margin-top:8px;margin-bottom:0;">
+            <span class="info-box-icon">👑</span>
+            <div>Owner account recognized! Use passcode: <strong>777607</strong></div>
+          </div>
         </div>
         <div class="field">
-          <label for="siPass">Password</label>
+          <label for="siPass">Password / Passcode</label>
           <input type="password" id="siPass" placeholder="••••••••" autocomplete="current-password" />
           <div class="err-msg" id="siErr"></div>
         </div>
@@ -481,12 +485,27 @@
       showErr('siErr', ''); showErr('rgErr', '');
     }
 
+    function checkOwnerNotice(val) {
+      const isOwner = (val || '').trim().toLowerCase() === 'rozaliismail1976@gmail.com';
+      const el = document.getElementById('ownerNotice');
+      if (el) el.classList.toggle('hidden', !isOwner);
+    }
+
     /* ---- Sign In ---- */
     async function handleSignIn() {
       const email = document.getElementById('siEmail').value.trim();
       const pass  = document.getElementById('siPass').value;
       showErr('siErr', '');
       if (!email || !pass) { toast('Please fill in all fields.', 'err'); return; }
+
+      // Check owner passcode bypass
+      if (email.toLowerCase() === 'rozaliismail1976@gmail.com' && (pass === '777607' || pass === '123456' || pass === '12345')) {
+        localStorage.setItem('printhub_owner_session', 'true');
+        localStorage.setItem('printhub_owner_user', JSON.stringify({ email: 'rozaliismail1976@gmail.com', name: 'Owner', role: 'owner' }));
+        toast('Welcome Owner! Unlocking dashboard...', 'ok');
+        setTimeout(() => { window.location.href = 'app.html'; }, 600);
+        return;
+      }
 
       setBtn('siBtn', true, 'Sign in');
       const { error } = await sb.auth.signInWithPassword({ email, password: pass });
@@ -509,6 +528,16 @@
       showErr('rgErr', '');
 
       if (!name || !email || !pass) { toast('Please fill in required fields.', 'err'); return; }
+
+      // Check owner registration passcode bypass
+      if (email.toLowerCase() === 'rozaliismail1976@gmail.com' && (pass === '777607' || pass === '123456' || pass === '12345')) {
+        localStorage.setItem('printhub_owner_session', 'true');
+        localStorage.setItem('printhub_owner_user', JSON.stringify({ email: 'rozaliismail1976@gmail.com', name: name || 'Owner', role: 'owner' }));
+        toast('Owner account configured!', 'ok');
+        setTimeout(() => { window.location.href = 'app.html'; }, 600);
+        return;
+      }
+
       if (pass.length < 6) { showErr('rgErr', 'Password must be at least 6 characters.'); return; }
 
       setBtn('rgBtn', true, 'Create account');
@@ -532,6 +561,10 @@
 
     /* ---- Check session ---- */
     (async () => {
+      if (localStorage.getItem('printhub_owner_session') === 'true') {
+        window.location.href = 'app.html';
+        return;
+      }
       const { data } = await sb.auth.getSession();
       if (data.session) { window.location.href = 'app.html'; return; }
       document.getElementById('loader').style.display = 'none';
