@@ -241,6 +241,22 @@
       height: 1px; background: #F3F4F6;
     }
 
+    .info-box {
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      border-left: 3px solid #4F46E5;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #4B5563;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .info-box-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
     /* Toggle link */
     .toggle-link {
       text-align: center;
@@ -316,26 +332,26 @@
       </div>
       <div class="panel-headline">
         <h1>The smarter<br>way to print.</h1>
-        <p>Upload your file, set your options, and collect — without the back-and-forth messages.</p>
+        <p>Sign in once per device for fast file uploads, live status tracking, and hassle-free pickup — no repetitive form filling or chat delays.</p>
       </div>
     </div>
 
     <div class="panel-features">
       <div class="feature-row">
+        <div class="feature-dot">🔑</div>
+        <span class="feature-text">Stay signed in — instant access for every future order</span>
+      </div>
+      <div class="feature-row">
         <div class="feature-dot">📤</div>
-        <span class="feature-text">Upload any file — PDF, Word, or image</span>
+        <span class="feature-text">Upload any document — PDF, Word, or images</span>
       </div>
       <div class="feature-row">
         <div class="feature-dot">🎨</div>
-        <span class="feature-text">Choose colour or monochrome, any paper size</span>
-      </div>
-      <div class="feature-row">
-        <div class="feature-dot">📋</div>
-        <span class="feature-text">Track your job status in real time</span>
+        <span class="feature-text">Customize paper size, copies & color settings</span>
       </div>
       <div class="feature-row">
         <div class="feature-dot">⚡</div>
-        <span class="feature-text">One-click print straight to the inkjet</span>
+        <span class="feature-text">Real-time status updates from pending to ready</span>
       </div>
     </div>
   </div>
@@ -348,7 +364,12 @@
       <div id="viewSignIn">
         <div class="form-heading">
           <h2>Welcome back</h2>
-          <p>Sign in to your PrintHub account</p>
+          <p>Sign in to manage and submit your print orders</p>
+        </div>
+
+        <div class="info-box">
+          <span class="info-box-icon">💡</span>
+          <div>Sign in once on your device to quickly place new orders and track pickup status anytime.</div>
         </div>
 
         <div class="field">
@@ -374,7 +395,12 @@
       <div id="viewRegister" style="display:none;">
         <div class="form-heading">
           <h2>Create account</h2>
-          <p>Join PrintHub — it only takes a moment</p>
+          <p>Join PrintHub — fast, simple & one-time setup</p>
+        </div>
+
+        <div class="info-box">
+          <span class="info-box-icon">✨</span>
+          <div>Creating an account saves your info so future printing takes only seconds.</div>
         </div>
 
         <div class="field">
